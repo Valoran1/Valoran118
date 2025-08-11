@@ -4,29 +4,46 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Valoran – AI mentor za moške</title>
-    <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/png" href="Logo.png" />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
   </head>
-  <body style="font-family: 'IBM Plex Sans', sans-serif; background-color: #101010;">
+
+  <body>
     <div class="container">
+      <!-- HERO + EMAIL CAPTURE -->
       <section class="hero">
         <img src="Logo.png" alt="Valoran Logo" class="logo"/>
         <p class="subtitle">Tvoj AI mentor za disciplino, moč in jasnost</p>
+        <h2 class="hero-title">Če si pripravljen postati nevaren moški – začni zdaj</h2>
+        <form id="email-capture" class="email-form">
+          <input type="email" id="email-input" placeholder="Vnesi svoj email" required />
+          <button type="submit" class="cta-button">Začni</button>
+        </form>
       </section>
 
-      <section id="chat-box" class="chat-container"></section>
+      <!-- CHAT -->
+      <section id="chat-box" class="chat-container">
+        <!-- indikator tipkanja -->
+        <div id="typing-indicator" class="typing hidden">Valoran tipka</div>
+      </section>
 
+      <!-- CHAT FORM -->
       <form id="chat-form" class="chat-form">
-        <textarea
-          id="user-input"
-          placeholder="Vnesi vprašanje..."
-          autocomplete="off"
-          rows="1"
-        ></textarea>
+        <textarea id="user-input" placeholder="Vnesi vprašanje..." autocomplete="off" rows="1"></textarea>
         <button type="submit" class="send-button">Pošlji</button>
       </form>
 
+      <!-- EMAIL GATE po 3 sporočilih -->
+      <div id="email-gate" class="email-gate" style="display:none">
+        <p class="gate-title">Želiš nadaljevati? Vnesi email za odklep pogovora.</p>
+        <form id="email-gate-form" class="email-form">
+          <input type="email" id="email-gate-input" placeholder="Email" required />
+          <button type="submit" class="cta-button">Odkleni</button>
+        </form>
+      </div>
+
+      <!-- Scroll button -->
       <button id="scroll-to-bottom" class="scroll-button">▼</button>
     </div>
 
