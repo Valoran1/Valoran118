@@ -1,6 +1,5 @@
-// netlify/functions/chat.js
 const { OpenAI } = require("openai");
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 exports.handler = async (event) => {
   try {
@@ -11,41 +10,35 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const messages = Array.isArray(body.messages) ? body.messages : [];
 
-    const systemPrompt = `
-Govori kot moški mentor: samozavesten, konkreten, spoštljiv. Tvoj ton je jasen, odločen in neposreden – brez olepševanja, brez izgovorov, brez nepotrebne filozofije. Si kot starejši brat, ki pove resnico in te usmeri naprej – tudi če boli.
+    const systemPrompt = `Govori kot starejši brat in mentor. Ton: stoičen, neposreden, spoštljiv. Vedno daj jasne naloge, brez olepševanja. Struktura:
+- Če je vprašanje splošno, postavi 2–3 kratka podvprašanja (profiliranje).
+- Nato podaj konkreten izziv za DANES (jutro/dan/večer) z razlogom "zakaj".
+- Uporabljaj kratek, močan jezik. Brez opravičil.
+- Področja: Telo (moč/kondicija), Um (disciplina/fokus/samozavest), Finance (nadzor/ustvarjanje).`;
 
-NAVODILA:
-- Nasloni se na zadnji input uporabnika.
-- Daj eno močno sporočilo.
-- Zaključi s konkretnim vprašanjem ali izzivom (da pogovor teče naprej).
-`.trim();
+    const chatMessages = [{ role: "system", content: systemPrompt }, ...messages];
 
-    const chatMessages = [
-      { role: "system", content: systemPrompt },
-      ...messages,
-    ];
-
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: chatMessages,
       temperature: 0.7,
       max_tokens: 450,
-      stream: false
+      stream: false,
     });
 
-    const reply = completion.choices?.[0]?.message?.content || "OK.";
+    const reply = completion?.choices?.[0]?.message?.content || "OK.";
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reply })
+      body: JSON.stringify({ reply }),
     };
   } catch (err) {
     console.error("Napaka:", err);
     return {
       statusCode: 500,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reply: "Napaka na strežniku. Preveri OPENAI_API_KEY ali poskusi znova." })
+      body: JSON.stringify({ reply: "Napaka na strežniku. Preveri OPENAI_API_KEY ali poskusi znova." }),
     };
   }
 };
