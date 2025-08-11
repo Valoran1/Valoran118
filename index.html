@@ -2,35 +2,42 @@
 <html lang="sl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Valoran – AI mentor za moške</title>
     <link rel="icon" type="image/png" href="Logo.png" />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
-
   <body>
     <div class="container">
-      <!-- HERO + EMAIL CAPTURE -->
+      <!-- HERO -->
       <section class="hero">
-        <img src="Logo.png" alt="Valoran Logo" class="logo"/>
+        <img src="Logo.png" alt="Valoran Logo" class="logo" />
         <p class="subtitle">Tvoj AI mentor za disciplino, moč in jasnost</p>
         <h2 class="hero-title">Če si pripravljen postati nevaren moški – začni zdaj</h2>
+
+        <div class="hero-cta-wrap">
+          <a href="#chat" id="cta-start-chat" class="cta-button">Začni pogovor</a>
+          <button id="cta-forge" class="cta-button cta-secondary">Forge Yourself – 30-dnevni plan</button>
+        </div>
+
+        <!-- Hero email capture -->
         <form id="email-capture" class="email-form">
           <input type="email" id="email-input" placeholder="Vnesi svoj email" required />
-          <button type="submit" class="cta-button">Začni</button>
+          <button type="submit" class="cta-button">Shrani email</button>
         </form>
       </section>
 
       <!-- CHAT -->
-      <section id="chat-box" class="chat-container">
-        <!-- indikator tipkanja -->
-        <div id="typing-indicator" class="typing hidden">Valoran tipka</div>
+      <section id="chat" class="chat-container">
+        <div id="chat-box" class="chat-messages">
+          <div id="typing-indicator" class="typing hidden">Valoran tipka…</div>
+        </div>
       </section>
 
       <!-- CHAT FORM -->
       <form id="chat-form" class="chat-form">
-        <textarea id="user-input" placeholder="Vnesi vprašanje..." autocomplete="off" rows="1"></textarea>
+        <textarea id="user-input" placeholder="Vnesi vprašanje…" autocomplete="off" rows="1"></textarea>
         <button type="submit" class="send-button">Pošlji</button>
       </form>
 
@@ -43,7 +50,6 @@
         </form>
       </div>
 
-      <!-- Scroll button -->
       <button id="scroll-to-bottom" class="scroll-button">▼</button>
     </div>
 
