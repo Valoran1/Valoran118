@@ -13,19 +13,12 @@
       <!-- HERO -->
       <section class="hero">
         <img src="Logo.png" alt="Valoran Logo" class="logo" />
-        <p class="subtitle">Tvoj AI mentor za disciplino, moč in jasnost</p>
         <h2 class="hero-title">Če si pripravljen postati nevaren moški – začni zdaj</h2>
 
         <div class="hero-cta-wrap">
-          <a href="#chat" id="cta-start-chat" class="cta-button">Začni pogovor</a>
-          <button id="cta-forge" class="cta-button cta-secondary">Forge Yourself – 30-dnevni plan</button>
+          <!-- SAMO EN GUMB -->
+          <button id="cta-forge" class="btn-forge">Forge Yourself – 30-dnevni plan</button>
         </div>
-
-        <!-- Hero email capture -->
-        <form id="email-capture" class="email-form">
-          <input type="email" id="email-input" placeholder="Vnesi svoj email" required />
-          <button type="submit" class="cta-button">Shrani email</button>
-        </form>
       </section>
 
       <!-- CHAT -->
@@ -41,13 +34,16 @@
         <button type="submit" class="send-button">Pošlji</button>
       </form>
 
-      <!-- EMAIL GATE po 3 sporočilih -->
-      <div id="email-gate" class="email-gate" style="display:none">
-        <p class="gate-title">Želiš nadaljevati? Vnesi email za odklep pogovora.</p>
-        <form id="email-gate-form" class="email-form">
-          <input type="email" id="email-gate-input" placeholder="Email" required />
-          <button type="submit" class="cta-button">Odkleni</button>
+      <!-- EMAIL GATE (MODAL) – se pokaže šele po kliku na Forge -->
+      <div id="email-modal-backdrop" class="modal-backdrop hidden"></div>
+      <div id="email-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h3 id="modal-title" class="modal-title">Pridruži se Forge Yourself</h3>
+        <p class="modal-sub">Vnesi email in dobiš osebni 30-dnevni plan. Brez bullshita.</p>
+        <form id="email-form" class="email-form">
+          <input type="email" id="email-input" placeholder="Email" required />
+          <button type="submit" class="btn-forge">Začni Forge</button>
         </form>
+        <button id="modal-close" class="modal-close" aria-label="Zapri">×</button>
       </div>
 
       <button id="scroll-to-bottom" class="scroll-button">▼</button>
@@ -56,5 +52,6 @@
     <script src="script.js"></script>
   </body>
 </html>
+
 
 
