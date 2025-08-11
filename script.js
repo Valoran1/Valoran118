@@ -166,8 +166,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const botMsg = data.reply || "OK.";
-      botBubble.classLis
+      botBubble.classList.remove("typing");
+      typeByWord(botBubble, botMsg, 18);
+      conversation.push({ role: "assistant", content: botMsg });
+    } catch (err) {
+      console.error(err);
+      hideTyping();
+      botBubble.classList.remove("typing");
+      botBubble.textContent = "Prišlo je do napake. Poskusi znova.";
+    }
+  });
 
+  // Scroll button
+  chatLog.addEventListener("scroll", () => {
+    const nearBottom = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 20;
+    scrollBtn.style.display = nearBottom ? "none" : "block";
+  });
+  scrollBtn.addEventListener("click", scrollToBottom);
+});
 
 
 
