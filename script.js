@@ -3,25 +3,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("user-input");
   const chatLog = document.getElementById("chat-box");
   const typingEl = document.getElementById("typing-indicator");
-  const heroForm = document.getElementById("email-capture");
-  const heroEmail = document.getElementById("email-input");
-  const gateBox = document.getElementById("email-gate");
-  const gateForm = document.getElementById("email-gate-form");
-  const gateInput = document.getElementById("email-gate-input");
-  const ctaStart = document.getElementById("cta-start-chat");
   const ctaForge = document.getElementById("cta-forge");
   const scrollBtn = document.getElementById("scroll-to-bottom");
+
+  // Modal
+  const emailModal = document.getElementById("email-modal");
+  const emailBackdrop = document.getElementById("email-modal-backdrop");
+  const emailForm = document.getElementById("email-form");
+  const emailInput = document.getElementById("email-input");
+  const modalClose = document.getElementById("modal-close");
 
   let conversation = [];
   let userMsgCount = 0;
 
-  // Helpers
-  function showTyping() {
-    typingEl?.classList.remove("hidden");
-  }
-  function hideTyping() {
-    typingEl?.classList.add("hidden");
-  }
+  /* ============ Helpers ============ */
+  const show = (el) => el && el.classList.remove("hidden");
+  const hide = (el) => el && el.classList.add("hidden");
+
+  function showTyping() { show(typingEl); }
+  function hideTyping() { hide(typingEl); }
+
   function scrollToBottom() {
     chatLog.scrollTop = chatLog.scrollHeight;
   }
@@ -30,9 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
     input.style.height = input.scrollHeight + "px";
   }
   function storeEmail(email) {
-    try {
-      localStorage.setItem("valoran_email", email);
-    } catch {}
+    try { localStorage.setItem("valoran_email", email); } catch {}
+  }
+  function hasEmail() {
+    try { return !!localStorage.getItem("valoran_email"); } catch { return false; }
   }
 
   function addBubble(role, text = "") {
@@ -44,11 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
     wrap.appendChild(p);
     chatLog.appendChild(wrap);
     scrollToBottom();
-    return p; // return bubble element for streaming
+    return p; // for streaming
   }
 
   // Typing effect (word-by-word)
-  function typeByWord(el, text, speed = 24) {
+  function typeByWord(el, text, speed = 22) {
     const words = text.split(/(\s+)/);
     let i = 0;
     (function tick() {
@@ -62,31 +64,48 @@ document.addEventListener("DOMContentLoaded", () => {
     })();
   }
 
-  // Initial nudge
+  /* ============ Intro message (ostrejši) ============ */
   if (!sessionStorage.getItem("welcomed")) {
     const b = addBubble("assistant");
     b.classList.add("typing");
     showTyping();
     typeByWord(
       b,
-      "Jaz sem Valoran. Kratko: povej, kje si šibek – telo, glava ali finance? Nato dobiš jasen izziv za danes.",
-      16
+      "Jaz sem Valoran. Brez izgovorov. Izberi: telo, glava ali finance. Povej, kje padaš – dobiš nalogo za danes.",
+      14
     );
     sessionStorage.setItem("welcomed", "1");
   }
 
-  // CTA buttons
-  ctaStart?.addEventListener("click", (e) => {
-    e.preventDefault();
-    document.getElementById("user-input").focus();
-  });
+  /* ============ Forge CTA ============ */
+  function openModal() { show(emailModal); show(emailBackdrop); emailInput?.focus(); }
+  function closeModal() { hide(emailModal); hide(emailBackdrop); }
+
   ctaForge?.addEventListener("click", () => {
-    input.value = "Želim 30-dnevni Forge Yourself plan.";
+    openModal();
+  });
+  modalClose?.addEventListener("click", closeModal);
+  emailBackdrop?.addEventListener("click", closeModal);
+
+  emailForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const em = emailInput?.value.trim();
+    if (!em) return;
+    storeEmail(em);
+    emailInput.value = "";
+    closeModal();
+
+    // Avto-prilagojen prvi prompt po vpisu emaila:
+    input.value = "Želim osebni 30-dnevni Forge Yourself plan.";
     autoresize();
     input.focus();
+
+    // V pogovor dodaj info mehurček
+    const info = addBubble("system", "Email shranjen. Začnimo s Forge Yourself.");
+    info.classList.add("info");
   });
 
-  // Enter / Shift+Enter
+  /* ============ Enter / Shift+Enter ============ */
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -95,46 +114,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   input.addEventListener("input", autoresize);
 
-  // Email capture (hero)
-  heroForm?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const em = heroEmail?.value.trim();
-    if (em) {
-      storeEmail(em);
-      heroEmail.value = "";
-      const info = addBubble("system", "Email shranjen. V redu, nadaljuj.");
-      info.classList.add("info");
-    }
-  });
-
-  // Gate capture
-  gateForm?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const em = gateInput?.value.trim();
-    if (em) {
-      storeEmail(em);
-      gateInput.value = "";
-      gateBox.style.display = "none";
-    }
-  });
-
-  // Submit chat
+  /* ============ Submit chat ============ */
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = input.value.trim();
     if (!text) return;
 
-    // show user bubble
+    // user bubble
     addBubble("user", text);
     conversation.push({ role: "user", content: text });
     input.value = "";
     autoresize();
     userMsgCount++;
 
-    // Email gate after 3 user messages (if no email yet)
-    const hasEmail = !!localStorage.getItem("valoran_email");
-    if (!hasEmail && userMsgCount >= 3) {
-      gateBox.style.display = "block";
+    // če ni emaila po 3 user msg → odpri modal (gate)
+    if (!hasEmail() && userMsgCount >= 3) {
+      openModal();
       return;
     }
 
@@ -150,14 +145,18 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ messages: conversation })
       });
 
+      const contentType = response.headers.get("content-type") || "";
+
       if (!response.ok) {
+        // preberi morebitno telo z napako
+        let errText = "";
+        try { errText = await response.text(); } catch {}
         hideTyping();
         botBubble.classList.remove("typing");
-        botBubble.textContent = "Napaka pri povezavi. Poskusi znova.";
+        botBubble.textContent = `Napaka pri povezavi (HTTP ${response.status}). ${errText || "Preveri funkcijo / netlify logs."}`;
         return;
       }
 
-      const contentType = response.headers.get("content-type") || "";
       let data;
       if (contentType.includes("application/json")) {
         data = await response.json();
@@ -173,19 +172,16 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error(err);
       hideTyping();
       botBubble.classList.remove("typing");
-      botBubble.textContent = "Prišlo je do napake. Poskusi znova.";
+      botBubble.textContent = "Prišlo je do napake v mreži. Si online? Preveri konzolo/Netlify logs.";
     }
   });
 
-  // Scroll button
+  /* ============ Scroll button ============ */
   chatLog.addEventListener("scroll", () => {
     const nearBottom = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 20;
     scrollBtn.style.display = nearBottom ? "none" : "block";
   });
-  scrollBtn.addEventListener("click", scrollToBottom);
+  scrollBtn.addEventListener("click", () => { scrollToBottom(); });
 });
-
-
-
 
 
