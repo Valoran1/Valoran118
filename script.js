@@ -2,107 +2,148 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("chat-form");
   const input = document.getElementById("user-input");
   const chatLog = document.getElementById("chat-box");
-  const scrollBtn = document.getElementById("scroll-to-bottom");
-
   const typingEl = document.getElementById("typing-indicator");
   const heroForm = document.getElementById("email-capture");
   const heroEmail = document.getElementById("email-input");
   const gateBox = document.getElementById("email-gate");
   const gateForm = document.getElementById("email-gate-form");
   const gateInput = document.getElementById("email-gate-input");
+  const ctaStart = document.getElementById("cta-start-chat");
+  const ctaForge = document.getElementById("cta-forge");
+  const scrollBtn = document.getElementById("scroll-to-bottom");
 
   let conversation = [];
   let userMsgCount = 0;
 
   // Helpers
-  const hasEmail = () => {
-    try { return !!localStorage.getItem("valoranEmail"); } catch(e){ return false; }
-  };
-  const storeEmail = (em) => { try { localStorage.setItem("valoranEmail", em); } catch(e){} };
-  const showTyping = () => typingEl && typingEl.classList.remove("hidden");
-  const hideTyping = () => typingEl && typingEl.classList.add("hidden");
-  const scrollToBottom = () => { chatLog.scrollTop = chatLog.scrollHeight; };
-
-  // UI builders
-  function addMessage(role, text) {
-    const div = document.createElement("div");
-    div.className = role === "user" ? "user-msg fade-in" : "bot-msg fade-in";
-    div.textContent = text;
-    chatLog.appendChild(div);
-    scrollToBottom();
-    return div;
+  function showTyping() {
+    typingEl?.classList.remove("hidden");
+  }
+  function hideTyping() {
+    typingEl?.classList.add("hidden");
+  }
+  function scrollToBottom() {
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+  function autoresize() {
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + "px";
+  }
+  function storeEmail(email) {
+    try {
+      localStorage.setItem("valoran_email", email);
+    } catch {}
   }
 
-  function typeByWord(targetEl, text, speed = 22) {
-    const parts = (text || "").split(/(\s+)/); // ohrani presledke
+  function addBubble(role, text = "") {
+    const wrap = document.createElement("div");
+    wrap.className = `msg ${role}`;
+    const p = document.createElement("div");
+    p.className = "bubble";
+    p.textContent = text;
+    wrap.appendChild(p);
+    chatLog.appendChild(wrap);
+    scrollToBottom();
+    return p; // return bubble element for streaming
+  }
+
+  // Typing effect (word-by-word)
+  function typeByWord(el, text, speed = 24) {
+    const words = text.split(/(\s+)/);
     let i = 0;
-    targetEl.textContent = "";
-    function tick() {
-      if (i < parts.length) {
-        targetEl.textContent += parts[i++];
+    (function tick() {
+      if (i < words.length) {
+        el.textContent += words[i++];
         scrollToBottom();
         setTimeout(tick, speed);
       } else {
         hideTyping();
       }
-    }
-    tick();
+    })();
   }
+
+  // Initial nudge
+  if (!sessionStorage.getItem("welcomed")) {
+    const b = addBubble("assistant");
+    b.classList.add("typing");
+    showTyping();
+    typeByWord(
+      b,
+      "Jaz sem Valoran. Kratko: povej, kje si šibek – telo, glava ali finance? Nato dobiš jasen izziv za danes.",
+      16
+    );
+    sessionStorage.setItem("welcomed", "1");
+  }
+
+  // CTA buttons
+  ctaStart?.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("user-input").focus();
+  });
+  ctaForge?.addEventListener("click", () => {
+    input.value = "Želim 30-dnevni Forge Yourself plan.";
+    autoresize();
+    input.focus();
+  });
+
+  // Enter / Shift+Enter
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+  input.addEventListener("input", autoresize);
 
   // Email capture (hero)
-  if (heroForm) {
-    heroForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const em = (heroEmail && heroEmail.value.trim()) || "";
-      if (em) {
-        storeEmail(em);
-        heroEmail.value = "";
-        alert("Email shranjen. Dobrodošel v programu.");
-      }
-    });
-  }
+  heroForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const em = heroEmail?.value.trim();
+    if (em) {
+      storeEmail(em);
+      heroEmail.value = "";
+      const info = addBubble("system", "Email shranjen. V redu, nadaljuj.");
+      info.classList.add("info");
+    }
+  });
 
-  // Gate form
-  if (gateForm) {
-    gateForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const em = (gateInput && gateInput.value.trim()) || "";
-      if (em) {
-        storeEmail(em);
-        gateBox.style.display = "none";
-        form.style.display = "flex";
-      }
-    });
-  }
+  // Gate capture
+  gateForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const em = gateInput?.value.trim();
+    if (em) {
+      storeEmail(em);
+      gateInput.value = "";
+      gateBox.style.display = "none";
+    }
+  });
 
-  // Submit
+  // Submit chat
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const message = input.value.trim();
-    if (!message) return;
+    const text = input.value.trim();
+    if (!text) return;
 
-    // Gate check
-    userMsgCount += 1;
-    if (userMsgCount >= 3 && !hasEmail()) {
-      form.style.display = "none";
+    // show user bubble
+    addBubble("user", text);
+    conversation.push({ role: "user", content: text });
+    input.value = "";
+    autoresize();
+    userMsgCount++;
+
+    // Email gate after 3 user messages (if no email yet)
+    const hasEmail = !!localStorage.getItem("valoran_email");
+    if (!hasEmail && userMsgCount >= 3) {
       gateBox.style.display = "block";
-      gateInput && gateInput.focus();
       return;
     }
 
-    // User message
-    addMessage("user", message);
-    conversation.push({ role: "user", content: message });
-    input.value = "";
-    input.focus();
-
-    // Bot placeholder + typing
-    const botElement = addMessage("bot", "Valoran tipka");
-    botElement.classList.add("typing");
+    // placeholder assistant bubble
+    const botBubble = addBubble("assistant", "");
+    botBubble.classList.add("typing");
     showTyping();
 
     try {
-      // Non-streaming backend → vrne JSON { reply: "..." }
       const response = await fetch("/.netlify/functions/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,53 +151,22 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!response.ok) {
-        botElement.classList.remove("typing");
         hideTyping();
-        botElement.textContent = "Napaka pri povezavi z AI.";
+        botBubble.classList.remove("typing");
+        botBubble.textContent = "Napaka pri povezavi. Poskusi znova.";
         return;
       }
 
-      let data;
       const contentType = response.headers.get("content-type") || "";
+      let data;
       if (contentType.includes("application/json")) {
         data = await response.json();
       } else {
-        // če backend vrne goli tekst
-        const txt = await response.text();
-        data = { reply: txt };
+        data = { reply: await response.text() };
       }
 
       const botMsg = data.reply || "OK.";
-      botElement.classList.remove("typing");
-      // tipkanje besedo-po-besedo
-      typeByWord(botElement, botMsg, 22);
-
-      conversation.push({ role: "assistant", content: botMsg });
-    } catch (err) {
-      botElement.classList.remove("typing");
-      hideTyping();
-      botElement.textContent = "Prišlo je do napake. Poskusi znova.";
-      console.error(err);
-    }
-  });
-
-  // Shift+Enter = nova vrstica / Enter = pošlji
-  const ta = document.getElementById("user-input");
-  ta.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      form.dispatchEvent(new Event("submit"));
-    }
-  });
-
-  // Scroll gumb
-  const scrollBtn = document.getElementById("scroll-to-bottom");
-  chatLog.addEventListener("scroll", () => {
-    const nearBottom = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 20;
-    scrollBtn.style.display = nearBottom ? "none" : "block";
-  });
-  scrollBtn.addEventListener("click", () => scrollToBottom());
-});
+      botBubble.classLis
 
 
 
